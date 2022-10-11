@@ -1,0 +1,46 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby  :
+ 
+# Arquivo para provisionamento de um ambiente com multiplas máquinas virtuais.
+Vagrant.configure("2") do |config|
+	#Definição da estrutura do ambiente.
+	config.vm.define :master, primary: true do |master|
+		master.vm.box_check_update = true
+		#Definindo a imagem que será utilizada.
+		master.vm.box = "debian/buster64"
+		#Definindo o nome da máquina virtual.
+		master.vm.hostname = "master"
+		#Definindo o tipo da rede e atribuindo um ip estático.
+		master.vm.network "private_network", ip: "192.168.56.100"
+		master.vm.synced_folder ".", "/vagrant"
+		#Script para instalação dos recursos do ambiente.
+		master.vm.provision "shell", path: "install-docker.sh", privileged: true
+		master.vm.provision "shell", path: "master-swarm.sh", privileged: true
+		master.vm.provision "shell", path: "master-provision.sh", privileged: true
+		#Definindo o provisionador e as configurações da VM. Para esta estrutura será utilizado o Oracle VirtualBox.
+		master.vm.provider "virtualbox" do |vb|
+			vb.name = "master"
+			vb.memory = "512"
+			vb.cpus = "1"
+		end
+	end	
+
+	#Estrutura de configuração dos workers.
+	(1..3).each do |i|
+		config.vm.define "server0#{i}" do |server|
+			server.vm.box_check_update = true
+			server.vm.box = "debian/buster64"
+			server.vm.hostname = "server0#{i}"
+			server.vm.network "private_network", ip: "192.168.56.10#{i}"
+			server.vm.synced_folder ".", "/vagrant"
+			server.vm.provision "shell", path: "install-docker.sh", privileged: true
+			server.vm.provision "shell", path: "server-join.sh", privileged: true
+			server.vm.provision "shell", path: "server-provision.sh", privileged: true
+			server.vm.provider "virtualbox" do |vb|
+				vb.name = "server0#{i}"
+				vb.memory = "512"
+				vb.cpus = "1"
+			end
+		end		
+	end	
+end
