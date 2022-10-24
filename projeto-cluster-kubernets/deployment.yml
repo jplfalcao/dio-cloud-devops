@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mariadb
+spec:
+  selector:
+    matchLabels:
+      app: mariadb
+  template:
+    metadata:
+      labels:
+        app: mariadb
+    spec:
+      containers:
+      - name: mariadb
+        image: jplfalcao/project-database:1.0
+        # Ignora caso o volume já possua dados.
+        args:
+        - "--ignore-db-dir=lost+found"
+        # Verifica se a imagem existe. O valor padrão (caso não seja definido) e "IfNotPresent" fazendo com que o processo de verificação seja ignorado. 
+        # Neste caso o "Always" sempre verificará.
+        imagePullPolicy: Always
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: rootpasswd
+        - name: MYSQL_DATABASE
+          value: mydatabase
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - name: database-pvc
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: database-pvc
+        persistentVolumeClaim:
+          claimName: database-pvc
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php
+spec:
+  replicas: 9
+  selector:
+    matchLabels:
+      app: php
+  template:
+    metadata:
+      labels:
+        app: php
+    spec:
+      containers:
+      - name: php
+        image: jplfalcao/project-backend:1.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
