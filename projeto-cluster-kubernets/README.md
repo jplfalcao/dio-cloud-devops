@@ -1,4 +1,4 @@
-# Criando um deploy utilizando Kubernets.
+# Criando um deploy utilizando Kubernets
 Para esse projeto foi utilizado o Google Cloud Platform (GCP) como provedor de serviço.
 Na plataforma foi criado um cluster com trés nós utilizando a opção Free Tier.
 
